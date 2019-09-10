@@ -7,12 +7,14 @@ package fr.epsi.manager;
 
 import java.util.Set;
 import javax.ws.rs.core.Application;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 /**
  *
  * @author epsi
  */
 @javax.ws.rs.ApplicationPath("api")
+@CrossOrigin("*")
 public class ApplicationConfig extends Application {
 
     @Override

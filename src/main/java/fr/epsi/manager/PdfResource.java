@@ -21,6 +21,7 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.Produces;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PUT;
 import javax.ws.rs.PathParam;
@@ -30,14 +31,26 @@ import javax.ws.rs.core.Response;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import static javax.ws.rs.HttpMethod.POST;
+
+
+import java.io.OutputStream;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response.Status;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 /**
  * REST Web Service
@@ -45,6 +58,7 @@ import java.util.logging.Logger;
  * @author epsi
  */
 @Path("pdf")
+@CrossOrigin("*")
 public class PdfResource {
 
     @Context
@@ -52,7 +66,7 @@ public class PdfResource {
 
     private String DATA = "C:\\pdf\\test1.pdf";
 
-    private String DEST = "C:\\pdf\\Dest";
+    private String DEST = "C:\\pdf\\Dest\\";
     private String CHEMIN = "C:\\pdf\\";
 
     private String TEST_PDF = "C:\\pdf\\HelloWorld.pdf";
@@ -70,6 +84,7 @@ public class PdfResource {
      * Retrieves representation of an instance of
      * fr.epsi.manager.GenericResource
      *
+     * @param uploadedInputStream
      * @return an instance of java.lang.String
      */
     /*
@@ -84,9 +99,51 @@ public class PdfResource {
     return response ;
 
 }*/
+    @POST
+    @Path("/upload")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response uploadFile( File pdfFile ) throws IOException {
+        String nomPdf = "test1.pdf";
+        System.out.println("Je suis dans l'upload" + pdfFile.getName());
+        
+        String res = "pas de fichier" ; 
+        if ( pdfFile.length() > 0 )
+        {
+            
+            System.out.println("le chemin de mon fichier "+ pdfFile.getName());
+            copyFiles(pdfFile, pdfFile.getName());
+        }
+        
+        return Response
+                .status(Status.OK)
+                .build();
+    }
+
+    public  void copyFiles(File sourceLocation, String nomPdf )
+    throws IOException {
+
+        
+        {
+           
+                InputStream in = new FileInputStream(sourceLocation);
+                OutputStream out = new FileOutputStream(DEST+ nomPdf);
+
+                // Copy the bits from input stream to output stream
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+                in.close();
+                out.close();
+                   
+        }
+    }
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public String getJson() {
+        System.out.println(" je suis dans le get json front bien recu ");
         return "{ \"name\": \"nom-pdf\" }";
     }
 
@@ -97,12 +154,13 @@ public class PdfResource {
      */
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
-    public void putPdf(String content) {
+    public void putPdf(String content
+    ) {
     }
 
     @GET // M�thode HTTP utilis�e pour d�clencher cette m�thode
     @Path("/hello")
-    public String hello() throws IOException, DocumentException {
+    public Response hello() throws IOException, DocumentException {
         System.out.println("Hello  ");
         String monSt = "creation de Hello ";
 
@@ -119,12 +177,12 @@ public class PdfResource {
             e.printStackTrace();
         }
 
-        return monSt;
+        return Response
+                .status(Status.OK)
+                .build();
 
     }
 
-    
-    
     @GET // M�thode HTTP utilis�e pour d�clencher cette m�thode
     @Path("/image")
     public String addImage() throws IOException, DocumentException {
@@ -149,7 +207,6 @@ public class PdfResource {
             //String imageUrl = "http://www.eclipse.org/xtend/images/java8_logo.png";
             //Image image2 = Image.getInstance(new URL(imageUrl));
             //document.add(image2);
-
             document.close();
             writer.close();
         } catch (Exception e) {
@@ -159,8 +216,8 @@ public class PdfResource {
         return monSt;
 
     }
-    
-     @GET // M�thode HTTP utilis�e pour d�clencher cette m�thode
+
+    @GET // M�thode HTTP utilis�e pour d�clencher cette m�thode
     @Path("/merge")
     public String merge() throws IOException, DocumentException {
         System.out.println("merge   ");
@@ -170,24 +227,28 @@ public class PdfResource {
         PdfCopy copy = new PdfCopy(document, new FileOutputStream(MERGE_PDF));
 
         document.open();
-       // for (URL file : files){
-       
-            PdfReader reader = new PdfReader(CHEMIN+"merge1.pdf");
-            copy.addDocument(reader);
-            copy.freeReader(reader);
-            reader.close();
-            
-            reader = new PdfReader(CHEMIN+"merge2.pdf");
-            copy.addDocument(reader);
-            copy.freeReader(reader);
-            reader.close();
+        // for (URL file : files){
+
+        PdfReader reader = new PdfReader(CHEMIN + "merge1.pdf");
+        copy.addDocument(reader);
+        copy.freeReader(reader);
+        reader.close();
+
+        reader = new PdfReader(CHEMIN + "merge2.pdf");
+        copy.addDocument(reader);
+        copy.freeReader(reader);
+        reader.close();
+
+        reader = new PdfReader(CHEMIN + "merge3.pdf");
+        copy.addDocument(reader);
+        copy.freeReader(reader);
+        reader.close();
         //}
         document.close();
-    
 
         return monSt;
     }
-    
+
     @GET // M�thode HTTP utilis�e pour d�clencher cette m�thode
     @Path("/split")
     public String split() throws IOException, DocumentException {
@@ -195,8 +256,8 @@ public class PdfResource {
         String monSt = "split de Pdf ";
 
         // read original pdf file
-        String filename = "split.pdf";
-        PdfReader reader = new PdfReader(CHEMIN+filename);
+        String filename = "pdf1.pdf";
+        PdfReader reader = new PdfReader(CHEMIN + filename);
 
         // get number of pages
         int n = reader.getNumberOfPages();
@@ -204,10 +265,10 @@ public class PdfResource {
 
         // loop over all pages
         int i = 0;
-        while (i < n){
+        while (i < n) {
 
             // create destination file name
-            String destination = CHEMIN+filename.substring(0, filename.indexOf(".pdf")) + "-" + String.format("%03d", i + 1) + ".pdf";
+            String destination = CHEMIN + filename.substring(0, filename.indexOf(".pdf")) + "-" + String.format("%03d", i + 1) + ".pdf";
             System.out.println("Writing " + destination);
 
             // create new document with corresponding page size
