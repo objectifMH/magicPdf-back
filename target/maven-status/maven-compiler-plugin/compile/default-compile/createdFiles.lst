@@ -1,3 +1,4 @@
 fr\epsi\manager\PdfResource.class
 fr\epsi\manager\ApplicationConfig.class
 fr\epsi\manager\Pdf.class
+fr\epsi\manager\RestResponseFilter.class
